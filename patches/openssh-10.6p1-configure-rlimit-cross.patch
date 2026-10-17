@@ -1,0 +1,11 @@
+--- a/configure
++++ b/configure
+@@ -20971,7 +20971,7 @@
+ then :
+   { printf "%s\n" "$as_me:${as_lineno-$LINENO}: WARNING: cross compiling: assuming no" >&5
+ printf "%s\n" "$as_me: WARNING: cross compiling: assuming no" >&2;}
+-	 select_works_with_rlimit=no
++	 select_works_with_rlimit=yes
+ 
+ else $as_nop
+   cat confdefs.h - <<_ACEOF >conftest.$ac_ext

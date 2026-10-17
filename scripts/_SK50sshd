@@ -1,0 +1,82 @@
+#!/bin/sh
+#
+# sshd        Starts sshd.
+#
+# Replacement for the WD My Book World Edition II /etc/init.d/_SK50sshd
+# (https://github.com/fredrikspang-sys/mybook-world-openssh).
+# Starts the static OpenSSH in /usr/local/openssh (config /usr/local/openssh/etc/sshd_config,
+# port 22 by default). Falls back to the stock /usr/sbin/sshd (OpenSSH 3.9p1, /etc/sshd_config)
+# if the new binary is missing or its config test fails. install.sh keeps the original script
+# as _SK50sshd.wd-orig (and timestamped _SK50sshd.bak-* copies).
+# The WD web GUI SSH toggle (S50sshd symlink + /var/lock/sshd) works as before.
+
+NEW_SSHD=/usr/local/openssh/sbin/sshd
+NEW_CONF=/usr/local/openssh/etc/sshd_config
+PIDFILE=/var/run/sshd.pid
+
+# Make sure the ssh-keygen progam exists
+[ -f /usr/bin/ssh-keygen ] || exit 0
+
+# Old host keys (only used by the fallback /usr/sbin/sshd)
+if [ ! -f /etc/ssh_host_key ] ; then
+	echo Generating RSA Key...
+	/usr/bin/ssh-keygen -t rsa1 -f /etc/ssh_host_key -C '' -N ''
+fi
+if [ ! -f /etc/ssh_host_rsa_key ] ; then
+	echo Generating RSA Key...
+	/usr/bin/ssh-keygen -t rsa -f /etc/ssh_host_rsa_key -C '' -N ''
+fi
+if [ ! -f /etc/ssh_host_dsa_key ] ; then
+	echo Generating DSA Key...
+	echo THIS CAN TAKE A MINUTE OR TWO DEPENDING ON YOUR PROCESSOR!
+	echo
+	/usr/bin/ssh-keygen -t dsa -f /etc/ssh_host_dsa_key -C '' -N ''
+fi
+
+umask 077
+
+start() {
+	echo -n "Starting sshd: "
+	if [ -x $NEW_SSHD ] && $NEW_SSHD -t -f $NEW_CONF >/dev/null 2>&1 \
+	   && $NEW_SSHD -f $NEW_CONF </dev/null; then
+		logger -t sshd-init "started OpenSSH 10.6p1 ($NEW_CONF)" 2>/dev/null
+	else
+		logger -t sshd-init "new sshd failed, falling back to /usr/sbin/sshd" 2>/dev/null
+		echo -n "(fallback to /usr/sbin/sshd) "
+		/usr/sbin/sshd
+	fi
+	touch /var/lock/sshd
+	echo "OK"
+}
+stop() {
+	echo -n "Stopping sshd: "
+	if [ -f $PIDFILE ] && kill `cat $PIDFILE` 2>/dev/null; then
+		sleep 1
+	fi
+	rm -f $PIDFILE
+	# fallback (old behaviour): catches the old /usr/sbin/sshd and any leftover listener
+	killall sshd 2>/dev/null
+	rm -f /var/lock/sshd
+	echo "OK"
+}
+restart() {
+	stop
+	start
+}
+
+case "$1" in
+  start)
+	start
+	;;
+  stop)
+	stop
+	;;
+  restart|reload)
+	restart
+	;;
+  *)
+	echo $"Usage: $0 {start|stop|restart}"
+	exit 1
+esac
+
+exit $?

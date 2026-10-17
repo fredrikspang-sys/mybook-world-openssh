@@ -1,0 +1,16 @@
+# build work dir / downloads
+work/
+dl/
+# never commit host keys or user keys
+ssh_host_*
+*_key
+*_key.pub
+authorized_keys
+known_hosts
+id_*
+# misc
+*.bak-*
+*.wd-orig
+*.rej
+*~
+.DS_Store

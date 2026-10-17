@@ -1,0 +1,15 @@
+# sshd_config for the static OpenSSH build in /usr/local/openssh (WD My Book World Edition II).
+# install.sh starts a test instance with "-p 2222 -o PidFile=/var/run/sshd-test.pid";
+# after "install.sh --switch" the init script (_SK50sshd) runs it as the main sshd.
+Port 22
+PidFile /var/run/sshd.pid
+HostKey /usr/local/openssh/etc/ssh_host_ed25519_key
+HostKey /usr/local/openssh/etc/ssh_host_ecdsa_key
+HostKey /usr/local/openssh/etc/ssh_host_rsa_key
+AuthorizedKeysFile .ssh/authorized_keys
+# Key-only root login. Make sure /root/.ssh/authorized_keys works BEFORE switching over!
+PermitRootLogin prohibit-password
+# same keepalive settings as the WD stock /etc/sshd_config
+ClientAliveInterval 15
+ClientAliveCountMax 4
+Subsystem sftp /usr/local/openssh/libexec/sftp-server
